@@ -1,18 +1,20 @@
 package cn.xuwen.springtool.distributedlock;
 
 
+import cn.xuwen.common.annotation.Note;
 import cn.xuwen.common.util.ArrayTool;
 import cn.xuwen.springtool.transaction.TransactionHook;
+import lombok.RequiredArgsConstructor;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 
+@Note("可使用@Import注入容器")
+@RequiredArgsConstructor
 public class DistributedLockHelper {
 
-    @Autowired
-    RedissonClient redisson;
+    private final RedissonClient redisson;
 
 
     /**
@@ -21,9 +23,15 @@ public class DistributedLockHelper {
     public RLock lockOnCurrentTx(String lockKey){
         RLock lock = redisson.getLock(lockKey);
         lock.lock();
-        TransactionHook.afterCompletion((status) -> {
+        try{
+            TransactionHook.afterCompletion((status) -> {
+                lock.unlock();
+            });
+        }catch (Throwable ex){
+            // 中途异常，释放所有锁
             lock.unlock();
-        });
+            throw ex;
+        }
         return lock;
     }
 
@@ -45,6 +53,9 @@ public class DistributedLockHelper {
             });
         }catch (Throwable ex){
             // 中途异常，释放所有锁
+            for (RLock lock : locks) {
+                if (lock.isLocked()) lock.unlock();
+            }
             throw ex;
         }
         return locks;
