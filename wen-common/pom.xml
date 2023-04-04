@@ -5,9 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>wen-plugin-parent</artifactId>
         <groupId>io.github.vwenx</groupId>
-        <version>0.0.1-SNAPSHOT</version>
+        <artifactId>wen-plugin-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>wen-common</artifactId>
